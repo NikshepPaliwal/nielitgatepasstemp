@@ -160,53 +160,7 @@ function wardenLogin() {
 		$conn->close();
 		exit();
 
-		?>
-
-		<!DOCTYPE html>
-		<html>
-		<head>
-			<title>Warden Login</title>
-			<link rel="stylesheet" href="assets/warden.css">
-		</head>
-		<body>
-
-		<div class="form-container">
-			<h2>Warden Login</h2>
-
-			<input type="email" id="email" placeholder="Email">
-			<input type="password" id="password" placeholder="Password">
-
-			<button onclick="login()">Login</button>
-		</div>
-
-		<script>
-
-		async function login() {
-
-			const email = document.getElementById("email").value.trim();
-			const password = document.getElementById("password").value.trim();
-
-			const response = await fetch("index.php?module=User&action=wardenLogin", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ email, password })
-			});
-
-			const result = await response.json();
-
-			alert(result.message);
-
-			if (result.success) {
-				window.location.href = "index.php?module=User&action=wardenDashboard";
-			}
-		}
-
-		</script>
-
-		</body>
-		</html>
-
-		<?php
+		
 }
 
 
@@ -218,7 +172,7 @@ function wardenDashboard() {
 
     // User must be logged in
     if (!isset($_SESSION["warden_id"])) {
-        header("Location: index.php?module=User&action=wardenLogin");
+        header("Location: https://nielitgatepasstemp.onrender.com/index.php?module=User&action=wardenLogin");
         exit;
     }
 
@@ -2891,4 +2845,5 @@ function viewStudents(){
 	}
 
 }
+
 
