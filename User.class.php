@@ -33,10 +33,10 @@ function wardenLogin()
     }
 
     // Load DB
-    require_once "db.php";
-    $db = new Database();
-    $conn = $db->conn;
-
+    // require_once "db.php";
+    // $db = new Database();
+    // $conn = $db->conn;
+	include 'db.php';
     $response = [];
 
     try {
@@ -2805,6 +2805,7 @@ function viewStudents(){
 	}
 
 }
+
 
 
 
