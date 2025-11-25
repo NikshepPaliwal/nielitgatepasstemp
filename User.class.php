@@ -4,35 +4,7 @@
 class User 
 {
 	
-	function __construct()
-	{
-		
-		?>
-		<!DOCTYPE html>
-		<html lang="en">
-		<head>
-			<meta charset="UTF-8">
-			<title>Gate Pass System</title>
-			<link rel="stylesheet" href="assets/style.css">
-		</head>
-		<body>
-			<div class="container">
-				<h1>Digital Gate Pass System</h1>
-				<p>Select an option:</p>
-
-				<!-- CALL CLASS FUNCTIONS -->
-				<a href="index.php?module=User&action=adminLogin" class="btn">Student Registration</a>
-				<a href="index.php?module=User&action=studentLogin" class="btn">Student Login</a>
-				<a href="index.php?module=User&action=wardenLogin" class="btn">Warden Login</a>
-
-			</div>
-		</body>
-		</html>
-
-		<?php
 	
-
-	}
 
 
 
@@ -2845,5 +2817,6 @@ function viewStudents(){
 	}
 
 }
+
 
 
