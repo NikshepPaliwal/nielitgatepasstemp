@@ -4,7 +4,7 @@ class Database
 {
     private $host = "svc-3482219c-a389-4079-b18b-d50662524e8a-shared-dml.aws-virginia-6.svc.singlestore.com";
     private $user = "nikshep-e7718";
-    private $pass = 'sm?u4L{*x;K$iQ!q[rEh[E';     // FIXED: single quotes
+    private $pass = '4nCGWADrJ$^rexoL_t0%kqp5;     // FIXED: single quotes
     private $db   = "gatepass_db";
 
     public $conn;
@@ -42,3 +42,4 @@ class Database
         return $stmt->get_result();
     }
 }
+
