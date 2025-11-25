@@ -4,7 +4,7 @@ class Database
 {
     private $host = "svc-3482219c-a389-4079-b18b-d50662524e8a-shared-dml.aws-virginia-6.svc.singlestore.com";
     private $user = "nikshep-e7718";
-    private $pass = "nikshep-e7718 Password";            // Default XAMPP password
+    private $pass = "sm?u4L{*x;K$iQ!q[rEh[E";            // Default XAMPP password
     private $db   = "gatepass_db";
 
     public $conn;
@@ -44,4 +44,5 @@ class Database
         return $stmt->get_result();
     }
 }
+
 
