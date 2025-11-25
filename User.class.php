@@ -31,8 +31,9 @@ function wardenLogin() {
 		error_reporting(E_ALL);
 		ini_set('error_log', 'C:/Apache24/logs/php_errors.log'); // Update path
 
-		session_start();
-		include './db.php';
+		require_once "db.php";
+	    $db = new Database();
+	    $conn = $db->conn;
 
 		$response = array();
 
@@ -2817,6 +2818,7 @@ function viewStudents(){
 	}
 
 }
+
 
 
 
