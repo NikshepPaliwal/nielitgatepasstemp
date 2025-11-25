@@ -18,124 +18,111 @@ class User
 
 
 	}
-function wardenLogin() {
+function wardenLogin()
+{
+    // Force JSON API
+    header("Content-Type: application/json; charset=utf-8");
+    header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+    header("Access-Control-Allow-Headers: Content-Type");
 
-		ob_start();
-		header('Content-Type: application/json; charset=utf-8');
-		header('Access-Control-Allow-Origin: *'); // Adjust in production
-		header('Access-Control-Allow-Methods: POST, GET');
-		header('Access-Control-Allow-Headers: Content-Type');
+    // Handle OPTIONS preflight
+    if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
+        echo json_encode(["success" => true]);
+        exit;
+    }
 
-		ini_set('display_errors', 0);
-		ini_set('display_startup_errors', 0);
-		error_reporting(E_ALL);
-		ini_set('error_log', 'C:/Apache24/logs/php_errors.log'); // Update path
+    // Load DB
+    require_once "db.php";
+    $db = new Database();
+    $conn = $db->conn;
 
-		require_once "db.php";
-	    $db = new Database();
-	    $conn = $db->conn;
+    $response = [];
 
-		$response = array();
+    try {
 
-		// Log request method for debugging
-		error_log("Request method: " . $_SERVER["REQUEST_METHOD"]);
+        $method = $_SERVER["REQUEST_METHOD"];
 
-		try {
-			$method = $_SERVER["REQUEST_METHOD"];
-			if ($method != "POST" && $method != "GET") {
-				throw new Exception('Invalid request method: ' . $method, 405);
-			}
+        // Accept both POST and GET for testing
+        if ($method === "POST") {
+            $raw = file_get_contents("php://input");
+            $data = json_decode($raw, true);
 
-			// Get data from POST body or GET query
-			if ($method == "POST") {
-				$data = json_decode(file_get_contents('php://input'), true);
-				if (json_last_error() !== JSON_ERROR_NONE) {
-					throw new Exception('Invalid JSON input: ' . json_last_error_msg(), 400);
-				}
-			} else {
-				$data = [
-					'email' => $_GET['email'] ?? '',
-					'password' => $_GET['password'] ?? '',
-					'fcm_token' => $_GET['fcm_token'] ?? ''
-				];
-			}
+            if (!is_array($data)) {
+                throw new Exception("Invalid JSON body", 400);
+            }
 
-			$email = $data['email'] ?? '';
-			$password = $data['password'] ?? '';
-			$fcm_token = $data['fcm_token'] ?? '';
+        } elseif ($method === "GET") {
+            // GET mode only for testing
+            $data = [
+                "email"     => $_GET["email"] ?? "",
+                "password"  => $_GET["password"] ?? "",
+                "fcm_token" => $_GET["fcm_token"] ?? ""
+            ];
+        } else {
+            throw new Exception("Invalid Method", 405);
+        }
 
-			if (empty($email) || empty($password)) {
-				throw new Exception('Email and password are required', 400);
-			}
+        // Extract fields
+        $email = trim($data["email"] ?? "");
+        $password = trim($data["password"] ?? "");
+        $fcm_token = trim($data["fcm_token"] ?? "");
 
-			if (!$conn) {
-				throw new Exception('Database connection failed', 500);
-			}
+        // Validate
+        if ($email === "" || $password === "") {
+            throw new Exception("Email and password are required", 400);
+        }
 
-			// Fetch warden details
-			$stmt = $conn->prepare("SELECT id, email, password, gender FROM wardens WHERE email = ? LIMIT 1");
-			if (!$stmt) {
-				throw new Exception("Prepare failed: " . $conn->error, 500);
-			}
-			$stmt->bind_param("s", $email);
-			$stmt->execute();
-			$result = $stmt->get_result();
+        // Check warden
+        $stmt = $conn->prepare("SELECT id, email, password, gender FROM wardens WHERE email = ? LIMIT 1");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
 
-			if ($result->num_rows > 0) {
-				$warden = $result->fetch_assoc();
-				// For testing: plain-text password comparison
-				if ($warden['password'] === $password) {
-				// For production: use hashed passwords
-				// if (password_verify($password, $warden['password'])) {
-					$_SESSION['warden_id'] = $warden['id'];
-					$_SESSION['warden_gender'] = $warden['gender'];
-					$_SESSION['warden_name'] = $warden['email'] ? strstr($warden['email'], '@', true) : 'Warden';
-					$response['success'] = true;
-					$response['message'] = 'Login successful';
-					$response['warden'] = [
-						'id' => $warden['id'],
-						'email' => $warden['email'],
-						'gender' => $warden['gender'],
-						'name' => $_SESSION['warden_name']
-					];
+        if ($result->num_rows === 0) {
+            throw new Exception("Invalid login credentials", 401);
+        }
 
-					if (!empty($fcm_token)) {
-						$updateStmt = $conn->prepare("UPDATE wardens SET fcm_token = ? WHERE id = ?");
-						if (!$updateStmt) {
-							throw new Exception("Prepare failed for FCM update: " . $conn->error, 500);
-						}
-						$updateStmt->bind_param("si", $fcm_token, $warden['id']);
-						$updateStmt->execute();
-						$updateStmt->close();
-					}
+        $warden = $result->fetch_assoc();
 
-					http_response_code(200);
-				} else {
-					$response['success'] = false;
-					$response['message'] = 'Invalid login credentials';
-					http_response_code(401);
-				}
-			} else {
-				$response['success'] = false;
-				$response['message'] = 'Invalid login credentials';
-				http_response_code(401);
-			}
-			$stmt->close();
-		} catch (Exception $e) {
-			$response['success'] = false;
-			$response['message'] = $e->getMessage();
-			http_response_code($e->getCode() ?: 500);
-			error_log("Error: " . $e->getMessage());
-		}
+        if ($warden["password"] !== $password) {
+            throw new Exception("Invalid login credentials", 401);
+        }
 
-		ob_end_clean();
-		echo json_encode($response, JSON_THROW_ON_ERROR);
-		$conn->close();
-		exit();
+        // Login success → No sessions, API-only output
+        $response = [
+            "success" => true,
+            "message" => "Login successful",
+            "warden" => [
+                "id"     => $warden["id"],
+                "email"  => $warden["email"],
+                "gender" => $warden["gender"],
+                "name"   => strstr($warden["email"], "@", true)
+            ]
+        ];
 
-		
+        // Update FCM if provided
+        if ($fcm_token !== "") {
+            $u = $conn->prepare("UPDATE wardens SET fcm_token = ? WHERE id = ?");
+            $u->bind_param("si", $fcm_token, $warden["id"]);
+            $u->execute();
+        }
+
+        http_response_code(200);
+
+    } catch (Exception $e) {
+
+        http_response_code($e->getCode() ?: 500);
+
+        $response = [
+            "success" => false,
+            "message" => $e->getMessage()
+        ];
+    }
+
+    echo json_encode($response);
+    exit;
 }
-
 
 
 // warden dashboard...
@@ -2818,6 +2805,7 @@ function viewStudents(){
 	}
 
 }
+
 
 
 
